@@ -43,6 +43,7 @@ from negpy.desktop.workers.export import (
     LinearOutputTask,
     find_export_conflicts,
     resolve_output_dir,
+    scene_name,
 )
 from negpy.desktop.workers.fade_roll import FadeRollResult, FadeRollTask, FadeRollWorker
 from negpy.services.export.launch_recipe import LaunchRecipe, apply_recipe, recipe_intent, recipe_key
@@ -9556,6 +9557,7 @@ class AppController(QObject):
                 delivery,
                 metadata=params.metadata,
                 composite="HDR" if frames else "",
+                scene=scene_name(f),
             )
             # `_linear` always, on top of whatever the template rendered: without it a dump
             # written next to its source under the default pattern overwrites that source.

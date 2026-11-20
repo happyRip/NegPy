@@ -118,6 +118,7 @@ def render_export_filename(
     half: int = 0,
     metadata: Optional[MetadataConfig] = None,
     composite: str = "",
+    scene: str = "",
 ) -> str:
     """
     Renders the export filename using Jinja2 templates.
@@ -136,6 +137,10 @@ def render_export_filename(
     - camera / camera_make / camera_model, lens / lens_make / lens_model / focal_length
     - film / film_iso / film_manufacturer / film_color_type / film_format
     - developer / dilution / push_pull / development_time / development_temperature / scanning / exposure
+    - scene: name of the roll scene the frame is in, empty when it is in none
+
+    A ``/`` in the pattern makes a subfolder of the export folder. The result is then a
+    relative path; empty, ``.`` and ``..`` parts drop, so it never leaves that folder.
 
     ``composite`` suffixes the original name (e.g. "HDR"), so a merged frame does not
     write over the export of the source file it is named after.
@@ -167,6 +172,7 @@ def render_export_filename(
         "target_px": f"{export_settings.export_target_long_edge_px}px" if is_target_px else "",
         "border": "border" if border_size > 0 else "",
         "date": datetime.now().strftime("%Y%m%d"),
+        "scene": path_safe(scene),
     }
     # Stem for parse fallback is the unsuffixed basename (half suffix is export-only).
     stem_for_parse = os.path.splitext(os.path.basename(original_path))[0]
@@ -181,6 +187,8 @@ def render_export_filename(
         # Clean up the structural separators (spaces, dashes, underscores in the template
         # skeleton). original_name is still a placeholder here, so it is untouched.
         rendered = re.sub(r"[ _-]+", "_", rendered).strip("_")
+        parts = (part.strip("_") for part in re.split(r"[/\\]", rendered))
+        rendered = "/".join(part for part in parts if part not in ("", ".", ".."))
 
         # Restore original_name verbatim, with dashes, spaces and underscores intact.
         rendered = rendered.replace(_PLACEHOLDER, original_name)

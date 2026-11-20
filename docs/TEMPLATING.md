@@ -39,8 +39,13 @@ The **Export** and **Scan** tabs name files with Jinja2 templates.
 | `{{ exposure }}` | Exposure override text from Metadata. | `1/125s f/2.8` |
 | `{{ capture_date }}` | Original capture date, YYYYMMDD. A partial date pads to the first day. Empty if unset. | `19980714` |
 | `{{ capture_year }}` | Original capture year. Empty if unset. | `1998` |
+| `{{ scene }}` | Name of the roll scene the frame is in. Empty if the frame is in no scene. | `Beach` |
 
 Gear and process values come from the **Metadata** panel, or from each file's saved metadata in a batch. NegPy strips path-unsafe characters from them.
+
+### Subfolders
+
+A `/` in the pattern makes a subfolder in the export folder. Empty parts drop, so a frame in no scene goes into the export folder itself. A `..` part also drops: a pattern cannot write outside the export folder.
 
 ### Examples
 
@@ -52,6 +57,7 @@ Gear and process values come from the **Metadata** panel, or from each file's sa
 | `PRINT_{{ original_name }}_{{ paper_ratio }}` | `PRINT_DSC0123_3:2.jpg` |
 | `{{ roll }}_Frame{{ frame\|pad(3) }}_{{ film }}_{{ film_iso }}` | `Roll001_Frame012_Portra_400_400.jpg` |
 | `{{ film }}_{{ camera }}_{{ original_name }}` | `Portra_400_Mamiya_7_DSC0123.jpg` |
+| `{{ scene }}/{{ original_name }}` | `Beach/DSC0123.jpg`, or `DSC0123.jpg` for a frame in no scene |
 
 ## Scan Sidebar
 

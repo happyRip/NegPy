@@ -76,3 +76,15 @@ class TestFindExportConflicts(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSceneSubfolder(unittest.TestCase):
+    def test_a_scene_pattern_names_a_subfolder(self):
+        t = _task(os.path.join("d", "IMG_1.RAF"), out_mode=ExportPresetOutputMode.ABSOLUTE, out_path="out")
+        preset = ExportPreset(
+            name="t", output_mode=ExportPresetOutputMode.ABSOLUTE, output_path="out", filename_pattern="{{ scene }}/{{ original_name }}"
+        )
+        in_scene = ExportTask(file_info={**t.file_info, "scene": (1, "s1", "Beach")}, params=t.params, export_settings=preset)
+        self.assertEqual(resolve_export_naming(in_scene), (os.path.join("out", "Beach"), "IMG_1", "jpg"))
+        alone = ExportTask(file_info=t.file_info, params=t.params, export_settings=preset)
+        self.assertEqual(resolve_export_naming(alone), ("out", "IMG_1", "jpg"))

@@ -251,8 +251,16 @@ def resolve_export_naming(task: ExportTask) -> tuple[str, str, str]:
         half=int(task.file_info.get("half") or 0),
         metadata=task.metadata_config,
         composite="DIPTYCH" if task.diptych else ("HDR" if frames else ""),
+        scene=scene_name(task.file_info),
     )
-    return out_dir, filename, ext
+    subfolder, filename = os.path.split(filename)
+    return os.path.join(out_dir, subfolder) if subfolder else out_dir, filename, ext
+
+
+def scene_name(file_info: dict) -> str:
+    """The name of the roll scene a file is in, from its ``scene`` stamp ``(ordinal, scene_id, name)``."""
+    scene = file_info.get("scene")
+    return str(scene[2]) if scene else ""
 
 
 def resolve_export_target_path(task: ExportTask) -> str:

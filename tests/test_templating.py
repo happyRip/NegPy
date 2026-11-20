@@ -308,3 +308,34 @@ def test_capture_date_vars():
 def test_capture_date_vars_empty_when_unset():
     conf = ExportConfig(filename_pattern="{{ capture_year }}_{{ original_name }}")
     assert render_export_filename("shot.tif", conf, metadata=MetadataConfig()) == "shot"
+
+
+# ── Scene token and subfolders ───────────────────────────────────────────────
+
+
+def test_scene_token():
+    conf = ExportConfig(filename_pattern="{{ scene }}_{{ original_name }}")
+    assert render_export_filename("DSC0123.ORF", conf, scene="Beach") == "Beach_DSC0123"
+    assert render_export_filename("DSC0123.ORF", conf) == "DSC0123"
+
+
+def test_scene_subfolder():
+    conf = ExportConfig(filename_pattern="{{ scene }}/{{ original_name }}")
+    assert render_export_filename("DSC_0123.ORF", conf, scene="Day 1") == "Day_1/DSC_0123"
+
+
+def test_frame_in_no_scene_stays_in_the_export_folder():
+    conf = ExportConfig(filename_pattern="{{ scene }}/{{ original_name }}")
+    assert render_export_filename("DSC0123.ORF", conf) == "DSC0123"
+
+
+def test_scene_name_cannot_make_a_folder():
+    conf = ExportConfig(filename_pattern="{{ scene }}_{{ original_name }}")
+    assert render_export_filename("DSC0123.ORF", conf, scene="../a/b") == "ab_DSC0123"
+
+
+def test_pattern_cannot_leave_the_export_folder():
+    conf = ExportConfig(filename_pattern="../../{{ original_name }}")
+    assert render_export_filename("DSC0123.ORF", conf) == "DSC0123"
+    conf = ExportConfig(filename_pattern="./x\\..\\{{ original_name }}")
+    assert render_export_filename("DSC0123.ORF", conf) == "x/DSC0123"

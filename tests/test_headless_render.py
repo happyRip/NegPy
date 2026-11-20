@@ -111,3 +111,33 @@ def test_a_16_bit_tiff_and_a_missing_scan(scans, tmp_path):
     written = tifffile.imread(out / "one.tiff")
     assert written.dtype == np.uint16 and max(written.shape[:2]) == 120
     assert any("gone.tif" in m for m in messages)
+
+
+def test_a_scene_pattern_sorts_positives_into_scene_folders(scans, tmp_path):
+    from negpy.infrastructure.storage.repository import StorageRepository
+    from negpy.kernel.image.logic import calculate_file_hash
+    from negpy.services.assets import rolls
+
+    folder, data = scans
+    repo = StorageRepository(str(data / "edits.db"), str(data / "settings.db"))
+    repo.initialize()
+    roll_id = rolls.create_folder_roll(repo, str(folder))
+    rolls.create_scene(repo, roll_id, "Beach Day", [calculate_file_hash(str(folder / "one.tif"))])
+    out = tmp_path / "out"
+    request = parse_launch_args(
+        [
+            "--render",
+            str(folder),
+            "--format",
+            "jpeg",
+            "--long-edge",
+            "60",
+            "--output-dir",
+            str(out),
+            "--filename",
+            "{{ scene }}/{{ original_name }}",
+        ]
+    )
+    assert headless.run_render(request, emit=lambda m: None) == headless.EXIT_OK
+    assert (out / "Beach_Day" / "one.jpg").is_file()
+    assert (out / "two.jpg").is_file()

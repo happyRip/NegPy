@@ -54,6 +54,19 @@ class _ReadOnlyEdits:
             logger.warning("Could not read the saved edit of %s", path, exc_info=True)
             return None
 
+    def scene_for(self, file_hash: str, path: str) -> Optional[tuple]:
+        """The scene stamp ``(ordinal, scene_id, name)`` of a scan in its folder's roll."""
+        if self._repo is None:
+            return None
+        from negpy.services.assets import rolls
+
+        try:
+            roll_id = rolls.folder_roll_id_for_path(self._repo, os.path.dirname(path))
+            return rolls.scene_by_hash(self._repo, roll_id).get(file_hash) if roll_id else None
+        except Exception:
+            logger.warning("Could not read the scene of %s", path, exc_info=True)
+            return None
+
     def preset(self, name: str) -> Optional[ExportPreset]:
         if self._repo is None:
             return None
@@ -137,9 +150,13 @@ def run_render(request: LaunchRequest, emit: Callable[[str], None] = lambda m: p
             config = render_config(edits.edit_for(file_hash, path), recipe, lambda p=path: _detect_source_color(p))
             export = flat_export_config(delivery) if flat else delivery
             params = replace(flat_master_config(config) if flat else config, export=export)
+            file_info = {"path": path, "name": os.path.basename(path), "hash": file_hash}
+            scene = edits.scene_for(file_hash, path)
+            if scene:
+                file_info["scene"] = scene
             tasks.append(
                 ExportTask(
-                    file_info={"path": path, "name": os.path.basename(path), "hash": file_hash},
+                    file_info=file_info,
                     params=params,
                     export_settings=preset_from_export_config(export),
                     metadata_config=params.metadata,
